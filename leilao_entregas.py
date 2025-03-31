@@ -19,6 +19,7 @@ class DeliveryOptimizer:
             "RO": (-63.903, -8.761), "RR": (-60.671, 2.822), "RS": (-51.230, -30.033), "SC": (-48.548, -27.596),
             "SE": (-37.073, -10.947), "SP": (-46.633, -23.550), "TO": (-48.335, -10.184)
         }
+        self.best_route = []
     
     def ler_conexoes(self, arquivo):
         """Lê as conexões do arquivo e constrói o grafo"""
@@ -75,6 +76,7 @@ class DeliveryOptimizer:
             if custo < float('inf'):
                 melhor_lucro += bonus
                 melhor_sequencia.append((inicio, destino, custo, bonus))
+                self.best_route.append((inicio, destino))
                 inicio = destino
         
         tempo_total = (time.perf_counter() - tempo_inicio) * 1000
@@ -99,14 +101,16 @@ class DeliveryOptimizer:
                 if neighbor in positions:
                     x_values = [positions[node][0], positions[neighbor][0]]
                     y_values = [positions[node][1], positions[neighbor][1]]
-                    plt.plot(x_values, y_values, 'gold', alpha=0.6, linewidth=2)
+                    color = 'red' if (node, neighbor) in self.best_route or (neighbor, node) in self.best_route else 'gold'
+                    linewidth = 4 if color == 'red' else 2
+                    plt.plot(x_values, y_values, color, alpha=0.6, linewidth=linewidth)
                     mid_x = (x_values[0] + x_values[1]) / 2
                     mid_y = (y_values[0] + y_values[1]) / 2
-                    plt.text(mid_x, mid_y, str(weight), color='black', fontsize=12, fontweight='bold', bbox=dict(facecolor='white', alpha=0.9, edgecolor='black'))
+                    plt.text(mid_x, mid_y, str(weight), color='black', fontsize=12, fontweight='bold')
         
         for node, (x, y) in positions.items():
             plt.scatter(x, y, s=400, marker='s', color='royalblue', edgecolors='black', linewidth=1.5, alpha=0.9)
-            plt.text(x, y, node, ha='center', va='center', fontsize=12, fontweight='bold', color='white', bbox=dict(facecolor='black', alpha=0.7, edgecolor='none'))
+            plt.text(x, y, node, ha='center', va='center', fontsize=12, fontweight='bold', color='white')
         
         plt.title("Grafo de Conexões das Capitais Brasileiras", fontsize=16, fontweight='bold', color='darkblue')
         plt.xlabel("Longitude", fontsize=12)
@@ -118,5 +122,5 @@ if __name__ == "__main__":
     optimizer = DeliveryOptimizer()
     optimizer.ler_conexoes('conexoes_brasil.txt')
     optimizer.ler_entregas('entregas.txt')
-    optimizer.visualize_graph()
     optimizer.calcular_melhor_rota()
+    optimizer.visualize_graph()
