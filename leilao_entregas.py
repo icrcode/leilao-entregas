@@ -7,9 +7,6 @@ import numpy as np
 class DeliveryOptimizer:
     def __init__(self):
         self.graph = defaultdict(dict)
-        self.deliveries = []
-        self.best_profit = 0
-        self.best_path = []
         self.capital_coordinates = {
             "AC": (-68.667, -9.667), "AL": (-35.716, -9.667), "AM": (-60.025, -3.133), "AP": (-51.066, 0.034),
             "BA": (-38.516, -12.970), "CE": (-38.543, -3.717), "DF": (-47.882, -15.793), "ES": (-40.347, -20.315),
@@ -25,17 +22,10 @@ class DeliveryOptimizer:
         """Lê as conexões do arquivo e constrói o grafo"""
         with open(arquivo, 'r') as f:
             for linha in f:
-                origem, destino, tempo = linha.strip().split(',')
-                self.graph[origem][destino] = int(tempo)
-                self.graph[destino][origem] = int(tempo)
-    
-    def ler_entregas(self, arquivo):
-        """Lê a lista de entregas do arquivo"""
-        with open(arquivo, 'r') as f:
-            for linha in f:
-                tempo, destino, bonus = linha.strip().split(',')
-                self.deliveries.append((int(tempo), destino, int(bonus)))
-    
+                origem, destino, distancia = linha.strip().split(',')
+                self.graph[origem][destino] = int(distancia)
+                self.graph[destino][origem] = int(distancia)
+
     def dijkstra(self, origem, destino):
         """Calcula o menor caminho entre duas capitais"""
         fila = [(0, origem)]
@@ -63,32 +53,8 @@ class DeliveryOptimizer:
         percurso.reverse()
         return percurso, custos[destino]
     
-    def calcular_melhor_rota(self):
-        """Calcula a melhor sequência de entregas para maximizar o lucro"""
-        inicio = "DF"
-        melhor_lucro = 0
-        melhor_sequencia = []
-        tempo_inicio = time.perf_counter()
-        
-        for entrega in sorted(self.deliveries, key=lambda x: -x[2]):  # Ordena por bônus
-            _, destino, bonus = entrega
-            percurso, custo = self.dijkstra(inicio, destino)
-            if custo < float('inf'):
-                melhor_lucro += bonus
-                melhor_sequencia.append((inicio, destino, custo, bonus))
-                self.best_route.append((inicio, destino))
-                inicio = destino
-        
-        tempo_total = (time.perf_counter() - tempo_inicio) * 1000
-        
-        print("\nProgramação Dinâmica:")
-        for origem, destino, custo, bonus in melhor_sequencia:
-            print(f"{origem} -> {destino} | Tempo: {custo} min | Bônus: {bonus}")
-        print(f"Lucro total: {melhor_lucro}")
-        print(f"Tempo de execução: {tempo_total:.4f} ms")
-    
-    def visualize_graph(self):
-        """Visualiza o grafo de conexões baseado no mapa do Brasil"""
+    def visualize_graph(self, rota=None):
+        """Visualiza o grafo e destaca a menor rota se fornecida"""
         plt.figure(figsize=(12, 14))
         
         active_capitals = set(self.graph.keys())
@@ -101,18 +67,18 @@ class DeliveryOptimizer:
                 if neighbor in positions:
                     x_values = [positions[node][0], positions[neighbor][0]]
                     y_values = [positions[node][1], positions[neighbor][1]]
-                    color = 'red' if (node, neighbor) in self.best_route or (neighbor, node) in self.best_route else 'gold'
+                    color = 'red' if rota and (node, neighbor) in rota or (neighbor, node) in rota else 'gold'
                     linewidth = 4 if color == 'red' else 2
                     plt.plot(x_values, y_values, color, alpha=0.6, linewidth=linewidth)
                     mid_x = (x_values[0] + x_values[1]) / 2
                     mid_y = (y_values[0] + y_values[1]) / 2
-                    plt.text(mid_x, mid_y, str(weight), color='black', fontsize=12, fontweight='bold')
+                    plt.text(mid_x, mid_y, f"{weight} km", color='black', fontsize=12, fontweight='bold')
         
         for node, (x, y) in positions.items():
             plt.scatter(x, y, s=400, marker='s', color='royalblue', edgecolors='black', linewidth=1.5, alpha=0.9)
             plt.text(x, y, node, ha='center', va='center', fontsize=12, fontweight='bold', color='white')
         
-        plt.title("Grafo de Conexões das Capitais Brasileiras", fontsize=16, fontweight='bold', color='darkblue')
+        plt.title("Grafo de Conexões das Capitais Brasileiras (Distância em KM)", fontsize=16, fontweight='bold', color='darkblue')
         plt.xlabel("Longitude", fontsize=12)
         plt.ylabel("Latitude", fontsize=12)
         plt.grid(True, linestyle='--', alpha=0.4)
@@ -121,6 +87,17 @@ class DeliveryOptimizer:
 if __name__ == "__main__":
     optimizer = DeliveryOptimizer()
     optimizer.ler_conexoes('conexoes_brasil.txt')
-    optimizer.ler_entregas('entregas.txt')
-    optimizer.calcular_melhor_rota()
-    optimizer.visualize_graph()
+    
+    origem = input("Digite a cidade de origem (sigla): ").strip().upper()
+    destino = input("Digite a cidade de destino (sigla): ").strip().upper()
+
+    if origem not in optimizer.graph or destino not in optimizer.graph:
+        print("Cidade inválida. Certifique-se de usar a sigla correta.")
+    else:
+        caminho, distancia_total = optimizer.dijkstra(origem, destino)
+        print("\nMelhor Rota Encontrada:")
+        print(" -> ".join(caminho))
+        print(f"Distância total: {distancia_total} km")
+        
+        rota_destacada = [(caminho[i], caminho[i + 1]) for i in range(len(caminho) - 1)]
+        optimizer.visualize_graph(rota=rota_destacada)
