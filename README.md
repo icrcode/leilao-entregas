@@ -1,6 +1,6 @@
 # Leilão de Entregas
 
-Este projeto aborda conceitos fundamentais de Inteligência Artificial aplicados à otimização de entregas urbanas. O escopo inclui tópicos como Introdução à IA, Representação do Conhecimento, Teoria dos Grafos, Resolução de Problemas e Otimização.
+Este projeto explora conceitos fundamentais de Inteligência Artificial aplicados à otimização de entregas urbanas. O escopo inclui tópicos como Introdução à IA, Representação do Conhecimento, Teoria dos Grafos, Resolução de Problemas e Otimização.
 
 ## Inteligência Artificial - Leilão de Entregas - N1
 
@@ -27,20 +27,24 @@ Uma startup busca revolucionar o setor de entregas urbanas ao permitir que clien
 
 1. **Conexões entre destinos**: Uma matriz que representa as conexões e o tempo (em minutos) necessário para percorrê-las.
     - Exemplo:
-      ```
+
+    ```plaintext
       (A, B, 5); (B, C, 3); (A, D, 2); (C, D, 8)
-      ```
+      
+    ```plaintext
+
 2. **Lista de entregas**: Contém o horário de saída, o destino e o bônus oferecido.
+
     - Exemplo:
-      ```
-      (0, B, 1); (5, C, 10); (10, D, 8)
-      ```
+
+    ```plaintext
+    ```(0, B, 1); (5, C, 10); (10, D, 8)
+
 
 ### Exemplo de Formato de Entrada
 
-```
-Matriz de Adjacência:
-      A,  B,  C,  D
+```Matriz de Adjacência:
+     A,  B,  C,  D
 A    0,  5,  0,  2
 B    5,  0,  3,  0
 C    0,  3,  0,  8
@@ -64,12 +68,14 @@ D    2,  0,  8,  0
 ## Exemplos de Análise
 
 ### Opção 1: Priorizar a entrega em B
+
 - Saída de A às 0 minutos, chegada em B às 5 minutos.
 - Retorno a A às 10 minutos.
 - Próxima entrega possível: D.
 - **Lucro total:** 1 (B) + 8 (D) = **9 bônus**.
 
 ### Opção 2: Priorizar a entrega em C
+
 - Saída de A às 5 minutos, chegada em C às 13 minutos.
 - Retorno a A às 21 minutos.
 - Entregas em B e D não são mais possíveis.
@@ -95,8 +101,7 @@ D    2,  0,  8,  0
 
 ## Exemplo de Saída
 
-```
-Sequência de entregas: (5, C, 10)
+```Sequência de entregas: (5, C, 10)
 Lucro total: 10 bônus
 ```
 
