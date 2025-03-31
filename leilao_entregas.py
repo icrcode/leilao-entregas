@@ -202,22 +202,23 @@ def benchmark(optimizer):
         print(f"Lucro: {profit}")
         print(f"Tempo: {elapsed:.6f} ms")
     
-    # Cria a figura para os gráficos de comparação
-    fig_comparacao = plt.figure(figsize=(12, 5))
+    # Plot resultados
+    plt.figure(figsize=(12, 5))
     
     plt.subplot(1, 2, 1)
-    plt.bar(results.keys(), results.values(), color=['blue', 'green'])
+    plt.bar(results.keys(), results.values(), color=['red', 'orange'])
     plt.title('Comparação de Lucro')
     plt.ylabel('Lucro Total')
     
     plt.subplot(1, 2, 2)
-    plt.bar(times.keys(), times.values(), color=['blue', 'green'])
+    plt.bar(times.keys(), times.values(), color=['red', 'orange'])
     plt.title('Comparação de Tempo de Execução')
     plt.ylabel('Tempo (ms)')
     
     plt.tight_layout()
-    return fig_comparacao
+    plt.show()
 
+# Exemplo de uso
 if __name__ == "__main__":
     optimizer = DeliveryOptimizer()
     
@@ -225,12 +226,8 @@ if __name__ == "__main__":
     optimizer.ler_conexoes('conexoes.txt')
     optimizer.ler_entregas('entregas.txt')
     
-    # Cria a figura do grafo
-    fig_grafo = plt.figure(figsize=(10, 6))
+    # Visualiza o grafo
     optimizer.visualize_graph()
     
-    # Obtém a figura de comparação
-    fig_comparacao = benchmark(optimizer)
-    
-    # Mostra todas as figuras juntas
-    plt.show()
+    # Executa e compara os algoritmos
+    benchmark(optimizer)
