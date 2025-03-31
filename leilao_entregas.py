@@ -4,24 +4,24 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Coordenadas aproximadas das capitais brasileiras
-capital_coords = {
-    "AC": (-70.55, -9.97), "AL": (-35.73, -9.67), "AM": (-60.02, -3.1), "AP": (-51.07, 0.03), "BA": (-38.5, -12.97),
-    "CE": (-38.52, -3.72), "DF": (-47.93, -15.78), "ES": (-40.29, -20.32), "GO": (-49.25, -16.68), "MA": (-44.30, -2.53),
-    "MG": (-44.38, -19.92), "MS": (-54.62, -20.45), "MT": (-56.1, -15.6), "PA": (-48.50, -1.45), "PB": (-34.88, -7.12),
-    "PE": (-34.88, -8.05), "PI": (-42.80, -5.09), "PR": (-49.27, -25.42), "RJ": (-43.17, -22.90), "RN": (-35.22, -5.81),
-    "RO": (-63.9, -8.77), "RR": (-60.67, 2.82), "RS": (-51.23, -30.03), "SC": (-48.55, -27.59), "SE": (-37.07, -10.91),
-    "SP": (-46.63, -23.55), "TO": (-48.33, -10.25)
-}
-
 class DeliveryOptimizer:
     def __init__(self):
         self.graph = defaultdict(dict)
         self.deliveries = []
         self.best_profit = 0
         self.best_path = []
+        self.capital_coordinates = {
+            "AC": (-68.667, -9.667), "AL": (-35.716, -9.667), "AM": (-60.025, -3.133), "AP": (-51.066, 0.034),
+            "BA": (-38.516, -12.970), "CE": (-38.543, -3.717), "DF": (-47.882, -15.793), "ES": (-40.347, -20.315),
+            "GO": (-49.253, -16.679), "MA": (-44.307, -2.530), "MG": (-43.938, -19.922), "MS": (-54.646, -20.448),
+            "MT": (-56.096, -15.601), "PA": (-48.502, -1.455), "PB": (-34.870, -7.115), "PE": (-34.882, -8.054),
+            "PI": (-42.802, -5.089), "PR": (-49.273, -25.428), "RJ": (-43.209, -22.906), "RN": (-35.209, -5.795),
+            "RO": (-63.903, -8.761), "RR": (-60.671, 2.822), "RS": (-51.230, -30.033), "SC": (-48.548, -27.596),
+            "SE": (-37.073, -10.947), "SP": (-46.633, -23.550), "TO": (-48.335, -10.184)
+        }
     
     def ler_conexoes(self, arquivo):
+        """Lê as conexões do arquivo e constrói o grafo"""
         with open(arquivo, 'r') as f:
             for linha in f:
                 origem, destino, tempo = linha.strip().split(',')
@@ -29,66 +29,94 @@ class DeliveryOptimizer:
                 self.graph[destino][origem] = int(tempo)
     
     def ler_entregas(self, arquivo):
+        """Lê a lista de entregas do arquivo"""
         with open(arquivo, 'r') as f:
             for linha in f:
-                horario, destino, bonus = linha.strip().split(',')
-                self.deliveries.append((int(horario), destino, int(bonus)))
-        self.deliveries.sort(key=lambda x: x[0])
+                tempo, destino, bonus = linha.strip().split(',')
+                self.deliveries.append((int(tempo), destino, int(bonus)))
     
-    def dijkstra(self, start, end):
-        heap = [(0, start)]
-        visited = set()
-        distances = {node: float('inf') for node in self.graph}
-        distances[start] = 0
-        previous = {node: None for node in self.graph}
+    def dijkstra(self, origem, destino):
+        """Calcula o menor caminho entre duas capitais"""
+        fila = [(0, origem)]
+        custos = {cidade: float('inf') for cidade in self.graph}
+        custos[origem] = 0
+        caminho = {}
         
-        while heap:
-            current_dist, current_node = heapq.heappop(heap)
-            
-            if current_node == end:
-                path = []
-                while current_node is not None:
-                    path.append(current_node)
-                    current_node = previous[current_node]
-                return current_dist, path[::-1]
-            
-            if current_node in visited:
-                continue
-            
-            visited.add(current_node)
-            
-            for neighbor, weight in self.graph[current_node].items():
-                distance = current_dist + weight
-                if distance < distances[neighbor]:
-                    distances[neighbor] = distance
-                    previous[neighbor] = current_node
-                    heapq.heappush(heap, (distance, neighbor))
+        while fila:
+            custo_atual, cidade_atual = heapq.heappop(fila)
+            if cidade_atual == destino:
+                break
+            for vizinho, custo in self.graph[cidade_atual].items():
+                novo_custo = custo_atual + custo
+                if novo_custo < custos[vizinho]:
+                    custos[vizinho] = novo_custo
+                    heapq.heappush(fila, (novo_custo, vizinho))
+                    caminho[vizinho] = cidade_atual
         
-        return float('inf'), []
+        percurso = []
+        cidade = destino
+        while cidade in caminho:
+            percurso.append(cidade)
+            cidade = caminho[cidade]
+        percurso.append(origem)
+        percurso.reverse()
+        return percurso, custos[destino]
+    
+    def calcular_melhor_rota(self):
+        """Calcula a melhor sequência de entregas para maximizar o lucro"""
+        inicio = "DF"
+        melhor_lucro = 0
+        melhor_sequencia = []
+        tempo_inicio = time.perf_counter()
+        
+        for entrega in sorted(self.deliveries, key=lambda x: -x[2]):  # Ordena por bônus
+            _, destino, bonus = entrega
+            percurso, custo = self.dijkstra(inicio, destino)
+            if custo < float('inf'):
+                melhor_lucro += bonus
+                melhor_sequencia.append((inicio, destino, custo, bonus))
+                inicio = destino
+        
+        tempo_total = (time.perf_counter() - tempo_inicio) * 1000
+        
+        print("\nProgramação Dinâmica:")
+        for origem, destino, custo, bonus in melhor_sequencia:
+            print(f"{origem} -> {destino} | Tempo: {custo} min | Bônus: {bonus}")
+        print(f"Lucro total: {melhor_lucro}")
+        print(f"Tempo de execução: {tempo_total:.4f} ms")
     
     def visualize_graph(self):
-        plt.figure(figsize=(10, 8))
+        """Visualiza o grafo de conexões baseado no mapa do Brasil"""
+        plt.figure(figsize=(12, 14))
+        
+        active_capitals = set(self.graph.keys())
+        positions = {cap: self.capital_coordinates[cap] for cap in active_capitals if cap in self.capital_coordinates}
         
         for node in self.graph:
-            x, y = capital_coords[node]
-            plt.scatter(x, y, color='blue' if node != 'A' else 'red', s=100)
-            plt.text(x, y, node, fontsize=10, ha='right', color='black')
+            if node not in positions:
+                continue
+            for neighbor, weight in self.graph[node].items():
+                if neighbor in positions:
+                    x_values = [positions[node][0], positions[neighbor][0]]
+                    y_values = [positions[node][1], positions[neighbor][1]]
+                    plt.plot(x_values, y_values, 'gold', alpha=0.6, linewidth=2)
+                    mid_x = (x_values[0] + x_values[1]) / 2
+                    mid_y = (y_values[0] + y_values[1]) / 2
+                    plt.text(mid_x, mid_y, str(weight), color='black', fontsize=12, fontweight='bold', bbox=dict(facecolor='white', alpha=0.9, edgecolor='black'))
         
-        for node in self.graph:
-            for neighbor in self.graph[node]:
-                x1, y1 = capital_coords[node]
-                x2, y2 = capital_coords[neighbor]
-                plt.plot([x1, x2], [y1, y2], 'k-', alpha=0.5)
+        for node, (x, y) in positions.items():
+            plt.scatter(x, y, s=400, marker='s', color='royalblue', edgecolors='black', linewidth=1.5, alpha=0.9)
+            plt.text(x, y, node, ha='center', va='center', fontsize=12, fontweight='bold', color='white', bbox=dict(facecolor='black', alpha=0.7, edgecolor='none'))
         
-        plt.xlabel("Longitude")
-        plt.ylabel("Latitude")
-        plt.title("Mapa de Conexões entre Capitais")
-        plt.grid(True)
+        plt.title("Grafo de Conexões das Capitais Brasileiras", fontsize=16, fontweight='bold', color='darkblue')
+        plt.xlabel("Longitude", fontsize=12)
+        plt.ylabel("Latitude", fontsize=12)
+        plt.grid(True, linestyle='--', alpha=0.4)
         plt.show()
 
-# Exemplo de uso
 if __name__ == "__main__":
     optimizer = DeliveryOptimizer()
     optimizer.ler_conexoes('conexoes_brasil.txt')
     optimizer.ler_entregas('entregas.txt')
     optimizer.visualize_graph()
+    optimizer.calcular_melhor_rota()
