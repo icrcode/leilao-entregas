@@ -223,7 +223,7 @@ if __name__ == "__main__":
     optimizer = DeliveryOptimizer()
     
     # Carrega os dados
-    optimizer.ler_conexoes('conexoes.txt')
+    optimizer.ler_conexoes('conexoes_brasil.txt')
     optimizer.ler_entregas('entregas.txt')
     
     # Visualiza o grafo
