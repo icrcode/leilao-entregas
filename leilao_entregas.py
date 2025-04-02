@@ -3,6 +3,8 @@ import time
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import numpy as np
+import tkinter as tk
+from tkinter import filedialog, messagebox
 
 class DeliveryOptimizer:
     def __init__(self):
@@ -223,9 +225,29 @@ if __name__ == "__main__":
     optimizer = DeliveryOptimizer()
     
     # Carrega os dados
-    optimizer.ler_conexoes('conexoes.txt')
-    optimizer.ler_entregas('entregas.txt')
-    
+    def carregar_dados():
+        try:
+            conexoes_file = filedialog.askopenfilename(title="Selecione o arquivo de conexões", filetypes=[("Text Files", "*.txt")])
+            entregas_file = filedialog.askopenfilename(title="Selecione o arquivo de entregas", filetypes=[("Text Files", "*.txt")])
+            
+            if not conexoes_file or not entregas_file:
+                messagebox.showwarning("Aviso", "Ambos os arquivos devem ser selecionados!")
+                return
+            
+            optimizer.ler_conexoes(conexoes_file)
+            optimizer.ler_entregas(entregas_file)
+            messagebox.showinfo("Sucesso", "Dados carregados com sucesso!")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao carregar os dados: {e}")
+
+    # Cria a interface gráfica
+    root = tk.Tk()
+    root.title("Carregar Dados de Entregas")
+
+    tk.Label(root, text="Clique no botão abaixo para carregar os dados:").pack(pady=10)
+    tk.Button(root, text="Carregar Dados", command=carregar_dados).pack(pady=10)
+
+    root.mainloop()
     # Visualiza o grafo
     optimizer.visualize_graph()
     
